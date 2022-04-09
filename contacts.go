@@ -100,16 +100,27 @@ type ContactCreate struct {
 }
 
 type ContactCreated struct {
-	ContactTag struct {
-		Cdate   string `json:"cdate"`
-		Contact string `json:"contact"`
-		ID      string `json:"id"`
-		Links   struct {
-			Contact string `json:"contact"`
-			Tag     string `json:"tag"`
-		} `json:"links"`
-		Tag string `json:"tag"`
-	} `json:"contactTag"`
+	FieldValues []FieldValues `json:"fieldValues"`
+	Contact     Contact       `json:"contact"`
+}
+
+type Links struct {
+	BounceLogs         string `json:"bounceLogs"`
+	ContactAutomations string `json:"contactAutomations"`
+	ContactData        string `json:"contactData"`
+	ContactGoals       string `json:"contactGoals"`
+	ContactLists       string `json:"contactLists"`
+	ContactLogs        string `json:"contactLogs"`
+	ContactTags        string `json:"contactTags"`
+	ContactDeals       string `json:"contactDeals"`
+	Deals              string `json:"deals"`
+	FieldValues        string `json:"fieldValues"`
+	GeoIps             string `json:"geoIps"`
+	Notes              string `json:"notes"`
+	Organization       string `json:"organization"`
+	PlusAppend         string `json:"plusAppend"`
+	TrackingLogs       string `json:"trackingLogs"`
+	ScoreValues        string `json:"scoreValues"`
 }
 
 func (a *ActiveCampaign) ContactCreate(ctx context.Context, contact ContactCreate) (*ContactCreated, error) {

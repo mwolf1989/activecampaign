@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"io"
 	"net/http"
 )
 
@@ -50,7 +51,12 @@ func (a *ActiveCampaign) Contacts(ctx context.Context, pof *POF) (*Contacts, err
 	if err != nil {
 		return nil, &Error{Op: "contacts", Err: err}
 	}
-	defer res.Body.Close()
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+
+		}
+	}(res.Body)
 
 	var contacts Contacts
 	err = json.NewDecoder(res.Body).Decode(&contacts)
@@ -66,7 +72,12 @@ func (a *ActiveCampaign) ListContacts(ctx context.Context, listID string) (*Cont
 	if err != nil {
 		return nil, &Error{Op: "list contacts", Err: err}
 	}
-	defer res.Body.Close()
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+
+		}
+	}(res.Body)
 
 	var contacts Contacts
 	err = json.NewDecoder(res.Body).Decode(&contacts)
@@ -89,11 +100,16 @@ type ContactCreate struct {
 }
 
 type ContactCreated struct {
-	Email      string       `json:"email"`
-	CreateDate string       `json:"cdate"`
-	UpdateDate string       `json:"cdate"`
-	Links      ContactLinks `json:"links"`
-	ID         string       `json:"id"`
+	ContactTag struct {
+		Cdate   string `json:"cdate"`
+		Contact string `json:"contact"`
+		ID      string `json:"id"`
+		Links   struct {
+			Contact string `json:"contact"`
+			Tag     string `json:"tag"`
+		} `json:"links"`
+		Tag string `json:"tag"`
+	} `json:"contactTag"`
 }
 
 func (a *ActiveCampaign) ContactCreate(ctx context.Context, contact ContactCreate) (*ContactCreated, error) {
@@ -111,7 +127,12 @@ func (a *ActiveCampaign) ContactCreate(ctx context.Context, contact ContactCreat
 	if err != nil {
 		return nil, &Error{Op: "contact create", Err: err}
 	}
-	defer res.Body.Close()
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+
+		}
+	}(res.Body)
 	if res.StatusCode != http.StatusCreated {
 		return nil, errors.New("contact create: " + res.Status)
 	}
@@ -132,7 +153,12 @@ func (a *ActiveCampaign) ContactDelete(ctx context.Context, id string) error {
 	if err != nil {
 		return &Error{Op: "contact delete", Err: err}
 	}
-	defer res.Body.Close()
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+
+		}
+	}(res.Body)
 	if res.StatusCode == http.StatusOK {
 		return nil
 	}
@@ -169,7 +195,12 @@ func (a *ActiveCampaign) ContactUpdate(ctx context.Context, id string, contact C
 	if err != nil {
 		return &Error{Op: "contact update", Err: err}
 	}
-	defer res.Body.Close()
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+
+		}
+	}(res.Body)
 	if res.StatusCode == http.StatusOK {
 		return nil
 	}
@@ -183,4 +214,56 @@ func (a *ActiveCampaign) ContactUpdate(ctx context.Context, id string, contact C
 	}
 
 	return errors.New("contact update: " + message.Message)
+}
+
+type ContactTag struct {
+	Contact string `json:"contact"`
+	Tag     string `json:"tag"`
+}
+
+type ContactTagResponse struct {
+	Contact string `json:"contact"`
+	Tag     string `json:"tag"`
+	Cdate   string `json:"cdate"`
+	ID      string `json:"id"`
+	Links   struct {
+		Contact string `json:"contact"`
+		Tag     string `json:"tag"`
+	} `json:"links"`
+}
+
+func (a *ActiveCampaign) ContactTag(ctx context.Context, contactTag ContactTag) (*ContactTagResponse, error) {
+	b := new(bytes.Buffer)
+	err := json.NewEncoder(b).Encode(struct {
+		ContactTag ContactTag `json:"contactTag"`
+	}{
+		ContactTag: contactTag,
+	})
+	if err != nil {
+		return nil, &Error{Op: "contact tag", Err: err}
+	}
+
+	res, err := a.send(ctx, http.MethodPost, "contactTags", nil, b)
+	if err != nil {
+		return nil, &Error{Op: "contact tag", Err: err}
+	}
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+
+		}
+	}(res.Body)
+	if res.StatusCode != http.StatusCreated {
+		return nil, errors.New("contact tag: " + res.Status)
+	}
+
+	var contactTagResponse struct {
+		ContactTag ContactTagResponse `json:"contactTag"`
+	}
+	err = json.NewDecoder(res.Body).Decode(&contactTagResponse)
+	if err != nil {
+		return nil, err
+	}
+
+	return &contactTagResponse.ContactTag, nil
 }

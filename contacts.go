@@ -619,3 +619,21 @@ func (a *ActiveCampaign) ContactTag(ctx context.Context, contactTag ContactTag) 
 
 	return &contactTagResponse.ContactTag, nil
 }
+
+func (a *ActiveCampaign) DeleteContactTag(ctx context.Context, contactTagId string) error {
+	res, err := a.send(ctx, http.MethodDelete, "contactTags/"+contactTagId, nil, nil)
+	if err != nil {
+		return &Error{Op: "delete contact tag", Err: err}
+	}
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+
+		}
+	}(res.Body)
+	if res.StatusCode != http.StatusOK {
+		return errors.New("delete contact tag: " + res.Status)
+	}
+
+	return nil
+}

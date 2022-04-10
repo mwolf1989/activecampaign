@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"os"
 	"strconv"
 	"strings"
 
@@ -111,14 +112,24 @@ func (a *ActiveCampaign) send(ctx context.Context, method, api string, pof *POF,
 	}
 	req.Header.Set("Api-Token", a.apiKey)
 
-	b, _ := httputil.DumpRequest(req, true)
-	fmt.Println(string(b))
+	if os.Getenv("DEBUG") == "true" {
+		dump, err := httputil.DumpRequestOut(req, true)
+		if err != nil {
+			return nil, &Error{Op: "send", Err: err}
+		}
+		fmt.Println(string(dump))
+	}
 	res, err := a.Client.Do(req)
 	if err != nil {
 		return nil, &Error{Op: "send", Err: err}
 	}
-	// b, _ = httputil.DumpResponse(res, true)
-	// fmt.Println(string(b))
+	if os.Getenv("DEBUG") == "true" {
+		dump, err := httputil.DumpResponse(res, true)
+		if err != nil {
+			return nil, &Error{Op: "send", Err: err}
+		}
+		fmt.Println(string(dump))
+	}
 
 	return res, nil
 }

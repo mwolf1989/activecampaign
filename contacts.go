@@ -458,6 +458,116 @@ func (a *ActiveCampaign) ContactGet(ctx context.Context, id string) (*GetContact
 	return nil, errors.New("contact get: " + message.Message)
 }
 
+type FilteredContactResponse struct {
+	Contacts []struct {
+		Cdate               string        `json:"cdate"`
+		Email               string        `json:"email"`
+		Phone               string        `json:"phone"`
+		FirstName           string        `json:"firstName"`
+		LastName            string        `json:"lastName"`
+		Orgid               string        `json:"orgid"`
+		SegmentioID         string        `json:"segmentio_id"`
+		BouncedHard         string        `json:"bounced_hard"`
+		BouncedSoft         string        `json:"bounced_soft"`
+		BouncedDate         string        `json:"bounced_date"`
+		IP                  string        `json:"ip"`
+		Ua                  string        `json:"ua"`
+		Hash                string        `json:"hash"`
+		SocialdataLastcheck string        `json:"socialdata_lastcheck"`
+		EmailLocal          string        `json:"email_local"`
+		EmailDomain         string        `json:"email_domain"`
+		Sentcnt             string        `json:"sentcnt"`
+		RatingTstamp        string        `json:"rating_tstamp"`
+		Gravatar            string        `json:"gravatar"`
+		Deleted             string        `json:"deleted"`
+		Adate               string        `json:"adate"`
+		Udate               string        `json:"udate"`
+		Edate               string        `json:"edate"`
+		ScoreValues         []interface{} `json:"scoreValues"`
+		Links               struct {
+			BounceLogs         string `json:"bounceLogs"`
+			ContactAutomations string `json:"contactAutomations"`
+			ContactData        string `json:"contactData"`
+			ContactGoals       string `json:"contactGoals"`
+			ContactLists       string `json:"contactLists"`
+			ContactLogs        string `json:"contactLogs"`
+			ContactTags        string `json:"contactTags"`
+			ContactDeals       string `json:"contactDeals"`
+			Deals              string `json:"deals"`
+			FieldValues        string `json:"fieldValues"`
+			GeoIps             string `json:"geoIps"`
+			Notes              string `json:"notes"`
+			Organization       string `json:"organization"`
+			PlusAppend         string `json:"plusAppend"`
+			TrackingLogs       string `json:"trackingLogs"`
+			ScoreValues        string `json:"scoreValues"`
+		} `json:"links"`
+		ID              string      `json:"id"`
+		Organization    interface{} `json:"organization"`
+		AccountContacts []string    `json:"accountContacts,omitempty"`
+	} `json:"contacts"`
+	Meta struct {
+		Total     string `json:"total"`
+		PageInput struct {
+			Segmentid  int         `json:"segmentid"`
+			Formid     int         `json:"formid"`
+			Listid     int         `json:"listid"`
+			Tagid      int         `json:"tagid"`
+			Limit      int         `json:"limit"`
+			Offset     int         `json:"offset"`
+			Search     interface{} `json:"search"`
+			Sort       interface{} `json:"sort"`
+			Seriesid   int         `json:"seriesid"`
+			Waitid     int         `json:"waitid"`
+			Status     int         `json:"status"`
+			ForceQuery int         `json:"forceQuery"`
+			Cacheid    string      `json:"cacheid"`
+		} `json:"page_input"`
+	} `json:"meta"`
+}
+
+//Get Contact by Email
+func (a *ActiveCampaign) ContactGetByEmail(ctx context.Context, email string) (*FilteredContactResponse, error) {
+	//	url := "https://youraccountname.api-us1.com/api/3/contacts?email=marcelwolf%40me.com&status=-1&orders[email]=ASC"
+	res, err := a.send(ctx, http.MethodGet, "contacts", &POF{QueryParams: []QueryParams{{
+		Key:   "email",
+		Value: email,
+	}, {
+		Key:   "status",
+		Value: "1",
+	}, {
+		Key:   "orders[email]",
+		Value: "ASC",
+	}}}, nil)
+	if err != nil {
+		return nil, &Error{Op: "contact get by email", Err: err}
+	}
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+
+		}
+	}(res.Body)
+	if res.StatusCode == http.StatusOK {
+		var contact FilteredContactResponse
+		err = json.NewDecoder(res.Body).Decode(&contact)
+		if err != nil {
+			return nil, err
+		}
+		return &contact, nil
+	}
+
+	var message struct {
+		Message string `json:"message"`
+	}
+	err = json.NewDecoder(res.Body).Decode(&message)
+	if err != nil {
+		return nil, &Error{Op: "contact get by email", Err: err}
+	}
+
+	return nil, errors.New("contact get by email: " + message.Message)
+}
+
 type ContactTag struct {
 	ContactId string `json:"contact"`
 	TagId     string `json:"tag"`

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/http/httputil"
 	"net/url"
 	"strconv"
 	"strings"
@@ -57,9 +58,10 @@ func New(url, apiKey string) (*ActiveCampaign, error) {
 }
 
 type POF struct {
-	Pagination *Pagination
-	Ordering   []Ordering
-	Filtering  []Filtering
+	Pagination  *Pagination
+	Ordering    []Ordering
+	Filtering   []Filtering
+	QueryParams []QueryParams
 }
 type Pagination struct {
 	Limit  int
@@ -70,6 +72,11 @@ type Ordering struct {
 	Order string
 }
 type Filtering struct {
+	Key   string
+	Value string
+}
+
+type QueryParams struct {
 	Key   string
 	Value string
 }
@@ -92,6 +99,9 @@ func (a *ActiveCampaign) send(ctx context.Context, method, api string, pof *POF,
 		for _, v := range pof.Filtering {
 			query.Add(fmt.Sprintf("filters[%s]", v.Key), v.Value)
 		}
+		for _, v := range pof.QueryParams {
+			query.Add(fmt.Sprintf("%s", v.Key), v.Value)
+		}
 		u.RawQuery = query.Encode()
 	}
 
@@ -101,8 +111,8 @@ func (a *ActiveCampaign) send(ctx context.Context, method, api string, pof *POF,
 	}
 	req.Header.Set("Api-Token", a.apiKey)
 
-	//b, _ := httputil.DumpRequest(req, true)
-	//fmt.Println(string(b))
+	b, _ := httputil.DumpRequest(req, true)
+	fmt.Println(string(b))
 	res, err := a.Client.Do(req)
 	if err != nil {
 		return nil, &Error{Op: "send", Err: err}
